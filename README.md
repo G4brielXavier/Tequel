@@ -8,6 +8,12 @@
 
 *By Gabriel Xavier : ]*
 
+## Security Notice
+
+**Tequel** is an experimental cryptographic implementation and should not be used in production environments.
+
+
+
 ## ⚙️ What **Tequel** do?
 
 - **Confiability**: Uses XOR operations and Modular-Arithmetic to "mask" data.

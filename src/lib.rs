@@ -13,11 +13,23 @@ pub struct TequelSHash {
 pub struct TequelEncryption {
     pub data: String,
     pub salt: String,
-    pub key: String,
-    pub mac: String
+    pub mac: String,
+    key: String,
 }
 
 
+
+/// Tequel provides a simple AEAD-style encryption system
+/// combining symmetric encryption with message authentication.
+///
+/// ### Example
+///
+/// ```
+/// use tequel::Tequel;
+///
+/// let tequel: Tequel = Tequel::new();
+///     
+/// ```
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Tequel {
     /// The Hash is 40 bytes, so is necessary 10 big states u32 
@@ -64,8 +76,14 @@ impl Tequel {
 
 
 
-    // HASH
-
+    /// ### Tequel Different HASH
+    /// ```
+    /// let tequel : Tequel = Tequel::new();
+    /// 
+    /// let msg: &str = "hello world";
+    /// 
+    /// let encrypted: TequelSHash = tequel.df_hash(&msg);
+    /// ```
     /// Generates a different for each calling, the input no matter
     pub fn df_hash(&mut self, input: &str) -> String {
 
@@ -100,6 +118,14 @@ impl Tequel {
     }
 
 
+    /// ### Tequel UNIQUE HASH
+    /// ```
+    /// let tequel : Tequel = Tequel::new();
+    /// 
+    /// let msg: &str = "hello world";
+    /// 
+    /// let encrypted: TequelSHash = tequel.dt_hash(&msg);
+    /// ```
     /// Generates a unique HASH to the same INPUT
     pub fn dt_hash(&mut self, input: &str) -> String {
 
@@ -132,6 +158,15 @@ impl Tequel {
     }
 
 
+
+    /// ### Tequel Random Salt Hash
+    /// ```
+    /// let tequel : Tequel = Tequel::new();
+    /// 
+    /// let msg: &str = "hello world";
+    /// 
+    /// let encrypted: TequelSHash = tequel.slgen_hash(&msg);
+    /// ```
     /// Generates a unique HASH with a RANDOM SALT implemented over INPUT. It returns a TequelSHash with .salt and .hash 
     pub fn slgen_hash(&mut self, input: &str) -> TequelSHash {
         let salt = self.rand_mini();
@@ -142,7 +177,15 @@ impl Tequel {
         TequelSHash { salt: salt, hash: hash }
     }
 
-
+    /// ### Tequel Custom Salt Hash
+    /// ```
+    /// let tequel : Tequel = Tequel::new();
+    /// 
+    /// let mysalt: &str = "banana";
+    /// let msg: &str = "hello world";
+    /// 
+    /// let encrypted: TequelSHash = tequel.slcus_hash(&msg, &mysalt);
+    /// ```
     /// Generates a unique HASH with a CUSTOM SALT implemented over INPUT. It returns a TequelSHash with .salt and .hash
     pub fn slcus_hash(&mut self, input: &str, salt: &str) -> TequelSHash {
         let combined = format!("{}{}", input, &salt);
@@ -170,9 +213,15 @@ impl Tequel {
 
 
 
-    // ENCRYPTION
-
-
+    /// ### Tequel Encryption
+    /// ```
+    /// let tequel : Tequel = Tequel::new();
+    /// 
+    /// let key: &str = "super_secret_key";
+    /// let msg: &str = "hello world";
+    /// 
+    /// let encrypted: TequelEncryption = tequel.teq_encrypt(&msg, &key);
+    /// ```
     /// Encrypt the DATA and returns a TequelCrypt 
     pub fn teq_encrypt(&mut self, data: &str, key: &str) -> TequelEncryption {
 
@@ -221,6 +270,22 @@ impl Tequel {
     }
 
 
+    /// ### Tequel Decryption
+    /// ```
+    /// let tequel : Tequel = Tequel::new();
+    /// 
+    /// let key: &str = "super_secret_key";
+    /// let msg: &str = "hello world";
+    /// 
+    /// let encrypted: TequelEncryption = tequel.teq_encrypt(&msg, &key);
+    /// let decrypted: String = match tequel.teq_decrypt(&encrypted) {
+    ///     Ok(d) => d,
+    ///     Err(e) => {
+    ///         println!("{}", e);
+    ///         String::from("ERR")
+    ///     }
+    /// }
+    /// ```
     /// Decrypt a TequelCrypt and returns the DATA decrypted
     pub fn teq_decrypt(&mut self, tequel_crypt: &TequelEncryption) -> Result<String, Box<dyn std::error::Error>> {
 
