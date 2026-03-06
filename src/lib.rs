@@ -1,14 +1,14 @@
 use std::{num::ParseIntError, time::SystemTime};
 
 
-/// Tequel Struct
+/// Represents return's structure of a TequelSaltHash function
 #[derive(Debug, Clone, PartialEq)]
 pub struct TequelSHash {
     pub salt: String,
     pub hash: String
 }
 
-
+/// Represents return's structure of a TequelEncrypt function
 #[derive(Debug, Clone, PartialEq)]
 pub struct TequelEncryption {
     pub data: String,
@@ -38,7 +38,7 @@ impl Tequel {
 
     // RANDOMICS
 
-    /// Generates a combination of 8 bytes letters and numbers 
+    /// Generates a randomic combination of 8 bytes with letters and numbers 
     pub fn rand_mini(&self) -> String {
 
         let mut state_a: u32 = 0x71374491;
@@ -66,7 +66,7 @@ impl Tequel {
 
     // HASH
 
-    /// Generate a different for each calling, the input no matter
+    /// Generates a different for each calling, the input no matter
     pub fn df_hash(&mut self, input: &str) -> String {
 
         let byteinput = input.as_bytes();
@@ -100,7 +100,7 @@ impl Tequel {
     }
 
 
-    /// Generate a unique HASH to the same INPUT
+    /// Generates a unique HASH to the same INPUT
     pub fn dt_hash(&mut self, input: &str) -> String {
 
         self.states = Self::new().states;
