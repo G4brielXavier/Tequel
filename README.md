@@ -8,9 +8,32 @@
 
 *By Gabriel Xavier : ]*
 
+## Summary
+
+- [Tequel](#tequel)
+  - [Summary](#summary)
+  - [Security Notice](#security-notice)
+  - [⚙️ What **Tequel** do?](#️-what-tequel-do)
+  - [📥 How to install and Use](#-how-to-install-and-use)
+  - [💻 How to use?](#-how-to-use)
+  - [Random](#random)
+    - [Simple Random](#simple-random)
+  - [🔒🔢 Hashing](#-hashing)
+    - [Different HASH](#different-hash)
+    - [UNIQUE HASH](#unique-hash)
+    - [UNIQUE HASH + Random Salt](#unique-hash--random-salt)
+    - [UNIQUE HASH + Custom Salt](#unique-hash--custom-salt)
+  - [🔐 Encryption and Decryption](#-encryption-and-decryption)
+    - [Encryption with `teq_encrypt`](#encryption-with-teq_encrypt)
+    - [Decryption with `teq_decrypt`](#decryption-with-teq_decrypt)
+  - [License](#license)
+
+
 ## Security Notice
 
 **Tequel** is an experimental cryptographic implementation and should not be used in production environments.
+
+
 
 
 
