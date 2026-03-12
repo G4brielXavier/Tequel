@@ -1,6 +1,6 @@
 [package]
 name = "tequel-rs"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 authors = ["Gabriel 'dotxav' Xavier <dotxavket@gmail.com>"]
 description = "A authenticated simetric encrypt engine (AEAD) built in Rust."

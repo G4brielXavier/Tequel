@@ -4,10 +4,16 @@ use crate::hash::TequelHash;
 use crate::error::TequelError;
 use crate::rng::TequelRng;
 
-/// TequelEncrypt is a struct that controls Encryption, it uses `Salt` and `Custom Iterations`. <br><br>
-/// Your functions are:
-/// - `encrypt`
-/// - `decrypt`
+/// TequelEncrypt is a struct that controls Encryption, it uses `Salt` and `Custom Iterations`.
+/// 
+/// You use this struct to use encrypt in Tequel.
+/// ```rust
+/// use tequel_rs::encrypt::TequelEncrypt;
+/// 
+/// fn main() {
+///     let mut teq_encrypt: TequelEncrypt = TequelEncrypt::new();
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TequelEncrypt {
     pub salt: String,
@@ -15,7 +21,21 @@ pub struct TequelEncrypt {
 }
 
 
-
+/// `TequelEncryption` is a struct that represent final encrypt, when `TequelEncrypt` is finish, it generates a `TequelEncryption` with MAC, Salt and Encrypted Data.
+/// 
+/// ```rust
+/// use tequel_rs::encrypt::{ TequelEncrypt, TequelEncryption };
+/// 
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// 
+///     let mut teq_encrypt: TequelEncrypt = TequelEncrypt::new();
+/// 
+///     // It returns a 'TequelEncryption'
+///     let encrypted: TequelEncryption = teq_encrypt.encrypt("my_data".as_bytes(), "my_key_123")?;
+/// 
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TequelEncryption {
     pub encrypted_data: String,
@@ -149,7 +169,7 @@ impl TequelEncrypt {
     ///     Err(e) => println!("{}", e)
     /// }
     /// ```
-    /// Decrypts a `TequelEncryption` and returns the DATA decrypted as `String`.
+    /// Decrypt a `TequelEncryption` and returns the DATA decrypted as `Result<String, TequelError>`.
     pub fn decrypt(&mut self, tequel_encryption: &TequelEncryption, key: &str) -> Result<String, TequelError> {
         
         let key_encrypt_input = key.as_bytes(); // key_a

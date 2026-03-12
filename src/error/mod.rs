@@ -1,9 +1,20 @@
+
+/// Enum that represents some Types of Error in Tequel.
 #[derive(Debug)]
 pub enum TequelError {
+    /// When Hash is invalid
     InvalidHash,
+
+    /// When occurr some error with the decode from HEX to UTF-8
     InvalidHex(String),
+
+    /// When MACs not match
     InvalidMac,
+
+    /// When occurr error while trying decode HEX to UTF-8
     InvalidUtf8,
+
+    /// When key is don't provided or is different
     KeyError(String),
 }
 

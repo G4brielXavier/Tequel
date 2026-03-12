@@ -94,7 +94,7 @@ impl TequelRng {
 
     // In range
     
-    /// Generates a random `u32` using `rand_deep_u32` between `min` and `max`.
+    /// Generates a random `u32` between `min` and `max` using `rand_deep_u32`.
     pub fn rand_in_range_by_deep(&self, min: u32, max: u32) -> u32 {
 
         let range = max - min + 1;
@@ -109,7 +109,7 @@ impl TequelRng {
 
     }
 
-    /// Generates a random `u32` using `rand_by_nano` between `min` and `max`.
+    /// Generates a random `u32` between `min` and `max` using `rand_by_nano`.
     pub fn rand_in_range_by_nano(&self, min: u32, max: u32) -> u32 {
 
         let range = max - min + 1;
