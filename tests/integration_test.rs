@@ -1,68 +1,136 @@
-use tequel_rs::{Tequel, TequelEncryption};
+use tequel_rs::hash::TequelHash;
+use tequel_rs::encrypt::TequelEncrypt;
 
 #[test]
-fn test_dt_hash_size_return() {
-    let mut tequel = Tequel::new();
+fn test_dif_hash_is_different_from_string() {
 
-    assert_eq!(tequel.dt_hash("a").len(), 80); // OK!
+    let mut teqhash = TequelHash::new();
+
+    let hash1 = teqhash.dif_hash_string("dog");
+    let hash2 = teqhash.dif_hash_string("dog");
+
+
+    assert_ne!(hash1, hash2);
+
 }
 
-
-// Test if df_hash returns a different HASH even that input is equal
 #[test]
-fn test_df_hash_is_different() {
-    let mut tequel = Tequel::new();
+fn test_dif_hash_is_different_from_bytes() {
 
-    let hash1 = tequel.df_hash("a");
-    let hash2 = tequel.df_hash("a");
+    let mut teqhash = TequelHash::new();
 
-    assert_ne!(hash1, hash2); // OK!
+    let hash1 = teqhash.dif_hash_bytes(b"dog");
+    let hash2 = teqhash.dif_hash_bytes(b"dog");
+
+
+    assert_ne!(hash1, hash2);
+
 }
 
-
-
-// Test if the dt_hash returns the same HASH even that input is equal
 #[test]
-fn test_dt_hash_is_equal() {
-    let mut tequel = Tequel::new();
+fn test_dif_hash_is_equal_from_string() {
 
-    let hash1 = tequel.dt_hash("a");
-    let hash2 = tequel.dt_hash("a");
+    let mut teqhash = TequelHash::new();
 
-    assert_eq!(hash1, hash2); // OK!
+    let hash1 = teqhash.dt_hash_string("dog");
+    let hash2 = teqhash.dt_hash_string("dog");
+
+
+    assert_eq!(hash1, hash2);
+
 }
 
-
-
-// Test if HASH is valid with the same SECRET_INPUT
 #[test]
-fn test_if_hash_with_salt_is_valid() {
+fn test_dif_hash_is_equal_from_bytes() {
 
-    let mut tequel = Tequel::new();
+    let mut teqhash = TequelHash::new();
+
+    let hash1 = teqhash.dt_hash_bytes(b"dog");
+    let hash2 = teqhash.dt_hash_bytes(b"dog");
+
+
+    assert_eq!(hash1, hash2);
+
+}
+
+#[test]
+fn test_if_hash_from_string_with_salt_is_valid() {
+
+    let mut teq_hash = TequelHash::new()
+        .with_salt("test")
+        .with_iteration(50);
 
     let my_secret = "secret";
-    let hash = tequel.slgen_hash(&my_secret);
+    let hash = teq_hash.dt_hash_string(&my_secret);
 
-    assert!(tequel.is_valid_sl_hash(&my_secret, &hash)) // OK!
+    assert!(teq_hash.is_valid_hash_from_string(&hash, &my_secret));// OK!
+
 }
+
+#[test]
+fn test_if_hash_from_bytes_with_salt_is_valid() {
+
+    let mut teq_hash = TequelHash::new()
+        .with_salt("test")
+        .with_iteration(50);
+
+    let my_secret = b"secret";
+    let hash = teq_hash.dt_hash_bytes(my_secret);
+
+    assert!(teq_hash.is_valid_hash_from_bytes(&hash, my_secret));// OK!
+
+}
+
+
 
 
 
 #[test]
-fn test_encrypt() {
+fn test_tequel_encrypt_full_cycle() {
 
-    let mut tequel = Tequel::new();
+    let mut teq_crypt = TequelEncrypt::new()
+        .with_iteration(100)
+        .with_salt("my_salt");
 
-    let my_password = "gx_pass202@!";
-    let my_secret_key = "12345";
+    let original_data = "My secret message 123";
+    let key = "tequel_key";
 
-    let pass_encrypted: TequelEncryption = tequel.teq_encrypt(&my_password, &my_secret_key);
+    let encrypted = teq_crypt.encrypt(original_data.as_bytes(), key)
+        .expect("Failed to encrypt");
 
-    println!("hash: {}", pass_encrypted.data);
-    println!("mac: {}", pass_encrypted.salt);
-    println!("salt: {}", pass_encrypted.mac);
+    let decrypted = teq_crypt.decrypt(&encrypted, key)
+        .expect("Failed to decrypt");
 
-    // OK!
+    assert_eq!(original_data, decrypted, "The encrypted data not match with original!");
 
 }
 
+
+#[test]
+fn test_tequel_stress_loop_100() {
+
+
+    let mut teq_crypt = TequelEncrypt::new()
+        .with_iteration(100)
+        .with_salt("my_salt");
+
+    let key = "ultra_safe_key_123";
+
+    for i in 0..100 {
+        // Create a different string in each lap (ex: "Data_0", "Data_1" ...)
+        let original_data = format!("Secret_Number_Message_{}", i);
+        
+        // 1. Encrypt (using bytes from formatted string)
+        let encrypted = teq_crypt.encrypt(original_data.as_bytes(), key)
+            .expect(&format!("Failed in encrypt loop {}", i));
+
+        // 2. Decrypt
+        let decrypted = teq_crypt.decrypt(&encrypted, key)
+            .expect(&format!("Failed in decrypt loop {} - Erro de UTF-8?", i));
+
+        // 3. Validação
+        assert_eq!(original_data, decrypted, "Integrity error loop {}", i);
+    }
+    
+    println!("🔥 100/100 Loop test done! Tequel is solid.");
+}

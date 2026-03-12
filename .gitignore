@@ -1,2 +1,4 @@
 .vscode/
 target/
+idea.txt
+src/main.rs

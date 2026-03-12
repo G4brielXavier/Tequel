@@ -1,13 +1,16 @@
 [package]
 name = "tequel-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 authors = ["Gabriel 'dotxav' Xavier <dotxavket@gmail.com>"]
-description = "A multi-layered byte-level encryption library built in Rust."
+description = "A authenticated simetric encrypt engine (AEAD) built in Rust."
 license = "MIT"
 repository = "https://github.com/G4brielXavier/tequel-rs"
 readme = "README.md"
 keywords = ["cryptography", "encryption", "mac", "learning"]
-categories = ["cryptography", "algorithms"]
+categories = ["cryptography"]
 
 [dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+getrandom = "0.2"
