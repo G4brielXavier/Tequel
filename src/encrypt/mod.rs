@@ -47,12 +47,16 @@ impl TequelEncrypt {
     /// <br>
     /// 
     /// ```rust
+    /// 
+    /// use tequel_rs::error::TequelError;
+    /// use tequel_rs::encrypt::{ TequelEncrypt, TequelEncryption };
+    /// 
     /// let mut teq_encrypt : TequelEncrypt = TequelEncrypt::new();
     /// 
     /// let key: &str = "super_secret_key"; // Your key to decryption
     /// let data: &str = "hello world"; // Your data to encrypt
     /// 
-    /// let encrypted: TequelEncryption = teq_encrypt.encrypt(&data.as_bytes(), key);
+    /// let encrypted: Result<TequelEncryption, TequelError> = teq_encrypt.encrypt(&data.as_bytes(), key);
     /// ```
     /// Encrypt the DATA and returns a `Result<TequelEncryption, TequelError>`
     pub fn encrypt(&mut self, data: &[u8], keyv: &str) -> Result<TequelEncryption, TequelError> {
@@ -127,18 +131,22 @@ impl TequelEncrypt {
     /// <br>
     /// 
     /// ```rust
-    /// let tequel : TequelEncrypt = TequelEncrypt::new();
+    /// 
+    /// use tequel_rs::error::TequelError;
+    /// use tequel_rs::encrypt::{ TequelEncrypt, TequelEncryption };
+    /// 
+    /// let mut tequel : TequelEncrypt = TequelEncrypt::new();
     /// 
     /// let key: &str = "super_secret_key";
     /// let data: &str = "hello world";
     /// 
-    /// let encrypted: TequelEncryption = tequel.encrypt(&data.as_bytes(), &key);
+    /// let encrypted: TequelEncryption = tequel.encrypt(&data.as_bytes(), &key).expect("Error in Encrypt");
     /// 
     /// let decrypted: Result<String, TequelError> = tequel.decrypt(&encrypted, &key);
     /// 
     /// match decrypted {
-    ///     Ok(d: String) => println!("{}", d),
-    ///     Err(e: TequelError) => println!("{}", e)
+    ///     Ok(d) => println!("{}", d),
+    ///     Err(e) => println!("{}", e)
     /// }
     /// ```
     /// Decrypts a `TequelEncryption` and returns the DATA decrypted as `String`.

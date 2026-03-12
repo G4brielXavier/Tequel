@@ -1,5 +1,6 @@
 use tequel_rs::hash::TequelHash;
 use tequel_rs::encrypt::TequelEncrypt;
+use tequel_rs::error::TequelError;
 
 #[test]
 fn test_dif_hash_is_different_from_string() {

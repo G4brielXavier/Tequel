@@ -45,7 +45,10 @@ impl TequelHash {
     /// <br>
     /// 
     /// ```
-    /// let tequelHash: TequelHash = TequelHash::new();
+    /// 
+    /// use tequel_rs::hash::TequelHash;
+    /// 
+    /// let mut tequelHash: TequelHash = TequelHash::new();
     /// 
     /// let hash: String = tequelHash.dif_hash_string("my_secret"); // -> s2ohs192...
     /// let hash1: String = tequelHash.dif_hash_string("my_secret"); // -> 29js19ss...
@@ -79,8 +82,11 @@ impl TequelHash {
 
     /// <br>
     /// 
-    /// ```
-    /// let tequelHash: TequelHash = TequelHash::new();
+    /// ```rust
+    /// 
+    /// use tequel_rs::hash::TequelHash;
+    /// 
+    /// let mut tequelHash: TequelHash = TequelHash::new();
     /// 
     /// let hash: String = tequelHash.dt_hash_string("my_secret"); // -> 9as12sk21...
     /// let hash1: String = tequelHash.dt_hash_string("my_secret"); // -> 9as12sk21...
@@ -121,8 +127,11 @@ impl TequelHash {
 
     /// <br>
     /// 
-    /// ```
-    /// let tequelHash: TequelHash = TequelHash::new();
+    /// ```rust
+    /// 
+    /// use tequel_rs::hash::TequelHash;
+    /// 
+    /// let mut tequelHash: TequelHash = TequelHash::new();
     /// 
     /// let mybytes: &[u8] = b"secret";
     /// 
@@ -162,8 +171,11 @@ impl TequelHash {
 
     /// <br>
     /// 
-    /// ```
-    /// let tequelHash: TequelHash = TequelHash::new();
+    /// ```rust
+    /// 
+    /// use tequel_rs::hash::TequelHash;
+    /// 
+    /// let mut tequelHash: TequelHash = TequelHash::new();
     /// 
     /// let mybytes: &[u8] = b"secret";
     /// 
@@ -204,8 +216,11 @@ impl TequelHash {
 
     /// <br>
     /// 
-    /// ```
-    /// let tequelHash: TequelHash = TequelHash::new();
+    /// ```rust
+    /// 
+    /// use tequel_rs::hash::TequelHash;
+    /// 
+    /// let mut tequelHash: TequelHash = TequelHash::new();
     /// 
     /// let mybytes: &[u8] = b"secret";
     /// 
@@ -236,8 +251,11 @@ impl TequelHash {
 
     /// <br>
     /// 
-    /// ```
-    /// let tequelHash: TequelHash = TequelHash::new();
+    /// ```rust
+    /// 
+    /// use tequel_rs::hash::TequelHash;
+    /// 
+    /// let mut tequelHash: TequelHash = TequelHash::new();
     /// 
     /// let my_data: &str = "secret";
     /// 
