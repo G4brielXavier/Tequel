@@ -13,8 +13,8 @@
 - [Tequel](#tequel)
   - [Summary](#summary)
   - [Security Notice](#security-notice)
-  - [⚙️ What **Tequel** do?](#️-what-tequel-do)
-  - [📥 How to install and Use](#-how-to-install-and-use)
+  - [⚙️ What does **Tequel** do?](#️-what-does-tequel-do)
+  - [📥 How to Install and Use](#-how-to-install-and-use)
   - [⁉️ Guide](#️-guide)
   - [Why the name 'Tequel'?](#why-the-name-tequel)
   - [License](#license)
@@ -28,14 +28,14 @@
 
 
 
-## ⚙️ What **Tequel** do?
+## ⚙️ What does **Tequel** do?
 
-- **Confiability**: Uses XOR operations, Modular-Arithmetic, Wrapping among constants to "mask" data.
+- **Confidentiality**: Uses XOR operations, Modular-Arithmetic, Wrapping among constants to "mask" data.
 - **Integrity (MAC)**: Validates if data was modified before decryption.
-- **Salting**: Generates random salts to guarante that same password generate different results.
+- **Salting:** Generates random salts to guarantee that the same input generates different results.
 - **Based in Encrypt-then-MAC (EtM)**: Smarter Security and validation of internal changes.
 
-## 📥 How to install and Use
+## 📥 How to Install and Use
 
 1. Install with **Cargo**
 ```
@@ -44,8 +44,9 @@ cargo install tequel-rs
 
 2. Add in your `cargo.toml`'s project
 
-```
-tequel-rs = "0.1.2"
+```toml
+[dependencies]
+tequel-rs = "0.2.0"
 ```
 
 3. Use in your project
@@ -58,9 +59,9 @@ use tequel_rs::*;
 
 Welcome to Tequel's Guide, here you will understand how each function of Tequel works.
 
-- [Tequel RNG](./docs/Core/RNG.md)
-- [Tequel Hash](./docs/Core/Hashing.md) <br>
-- [Tequel Encryption](./docs/Core/Encryption.md) <br>
+- [Tequel RNG](./docs/Core/RNG.md) — Low-level random number generation.
+- [Tequel Hash](./docs/Core/Hashing.md) <br> — Deterministic and non-deterministic hashing.
+- [Tequel Encryption](./docs/Core/Encryption.md) <br> — Authenticated encryption flow.
 
 ## Why the name 'Tequel'?
 
