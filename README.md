@@ -62,7 +62,7 @@ cargo install tequel-rs
 
 ```toml
 [dependencies]
-tequel-rs = "0.3.0"
+tequel-rs = "0.3.2"
 ```
 
 3. Use in your project
