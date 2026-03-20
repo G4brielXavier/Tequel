@@ -29,4 +29,11 @@
 - Tests
   - **Streess Test 10k Encryptions**: 
     - Passed in 0.87 sec (in `debug`)
-    - 
+
+
+## tequel-rs v0.4.5
+
+- Added **benchmark** with `criterion` and `rayon`
+- Tests with:
+  - Latency & Throughput
+  - Parallel Stress

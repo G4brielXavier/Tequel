@@ -14,6 +14,9 @@
 
 - [Tequel](#tequel)
   - [Summary](#summary)
+  - [📊 Performance Benchmarks](#-performance-benchmarks)
+    - [Latency \& Throughput](#latency--throughput)
+    - [Parallel Stress Test](#parallel-stress-test)
   - [📊 Stress and Safety report (v0.3.0 - v0.4.0)](#-stress-and-safety-report-v030---v040)
     - [**1. Colision Test (Avalanche Test)**](#1-colision-test-avalanche-test)
     - [**2.** **Entropy Analize (Shannon Entropy)**](#2-entropy-analize-shannon-entropy)
@@ -23,6 +26,23 @@
   - [⁉️ Guide](#️-guide)
   - [Why the name 'Tequel'?](#why-the-name-tequel)
   - [License](#license)
+
+
+## 📊 Performance Benchmarks
+
+Verified using `criterion.rs` on an optimized release build.
+
+### Latency & Throughput
+| Operation | Data Size | Result |
+| :--- | :--- | :--- |
+| **Encryption Latency** | 1 KB | **105.5 µs** |
+| **Stable Throughput** | 1 MB | **9.31 MiB/s** |
+| **Stable Throughput** | 5 MB | **8.83 MiB/s** |
+
+### Parallel Stress Test
+* **Scenario:** 100 concurrent chunks (10KB each)
+* **Total Time:** **25.42 ms**
+* **Conclusion:** Tequel scales linearly with CPU cores, making it ideal for multi-threaded applications.
 
 
 ## 📊 Stress and Safety report (v0.3.0 - v0.4.0)
@@ -74,7 +94,7 @@ cargo install tequel-rs
 
 ```toml
 [dependencies]
-tequel-rs = "0.4.0"
+tequel-rs = "0.4.5"
 ```
 
 3. Use in your project
