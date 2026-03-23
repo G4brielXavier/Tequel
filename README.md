@@ -6,7 +6,7 @@
 
 *A high-performance, SIMD-accelerated cryptographic engine and KDF, built in pure Rust for the modern CPU.*
 
-**Tequel 0.7.0: The Integrity & Speed Update.** Featuring a synchronized AVX2 core, the TQL-11 engine now delivers consistent **10+ MiB/s throughput** with a "Verify-then-Decrypt" architecture. Designed for local-first security, high-speed obfuscation, and low-level systems like **Olam VCS** and **MyWay CLI**.
+**Tequel 0.7.0: The Integrity & Speed Update.** Featuring a synchronized AVX2 core, the TQL-11 engine now delivers consistent **10+ MiB/s throughput** with a "Verify-then-Decrypt" architecture. Designed for local-first security, high-speed obfuscation, and low-level systems like **MyWay CLI**.
 
 *By Gabriel "dotxav" Xavier (@G4brielXavier)*
 
