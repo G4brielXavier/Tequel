@@ -53,7 +53,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tequel-rs = "0.7.0"
+tequel-rs = "0.7.4"
 ```
 
 ## Usage
