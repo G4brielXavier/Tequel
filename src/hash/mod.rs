@@ -77,7 +77,12 @@ impl TequelHash {
     /// ```
     pub fn tqlhash(&mut self, input: &[u8]) -> String {
 
-        self.states = [0u32; 12];
+        self.states = [
+            0x107912FA, 0x220952EA, 0x3320212A, 0x4324312F, 
+            0x5320212A, 0x9E3779B1, 0x85EBCA6B, 0xAD35744D,
+            0xCC2912FA, 0xEE0952EA, 0x1120212A, 0x2224312F,
+        ];
+
         let mut states_simd = unsafe { [_mm256_setzero_si256(); 12] };
 
         let mut chunks = input.chunks_exact(32);
