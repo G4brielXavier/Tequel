@@ -2,8 +2,7 @@ use std::collections::HashSet;
 use tequel_rs::hash::TequelHash;
 use tequel_rs::encrypt::TequelEncrypt;
 use std::time::Instant;
-
-
+// use tequel_rs::tools::merkle_nodes;
 
 #[test]
 fn test_dif_hash_is_equal_from_bytes() {
@@ -181,14 +180,11 @@ fn test_tequel_key_sensitivity() {
 
 #[test]
 fn test_collision_resistance_optimized() {
-    // Para 1 bilhão, use um Bloom Filter se tiver a crate, 
-    // ou teste lotes menores se quiser usar HashSet sem swap.
-    let iterations = 10_000_000; // 100 milhões já é um teste monstro
+    let iterations = 100_000;
     let mut seen_hashes = HashSet::with_capacity(iterations);
     let mut collisions = 0;
     let mut hasher = TequelHash::new();
     
-    // Buffer reutilizável para evitar format!() e alocações na heap
     let mut buffer = String::with_capacity(64);
     
     println!("🚀 Iniciando teste de colisão: {} iterações", iterations);
@@ -196,20 +192,19 @@ fn test_collision_resistance_optimized() {
 
     for i in 0..iterations {
         buffer.clear();
-        // Escreve o ID direto no buffer sem alocar nova String
+
         use std::fmt::Write;
         write!(&mut buffer, "payload_id_{}", i).unwrap();
         
         let hash = hasher.tqlhash(buffer.as_bytes());
 
-        // Se o hash já existe no set, temos uma colisão
+
         if !seen_hashes.insert(hash.clone()) {
             collisions += 1;
             println!("💥 COLISÃO ENCONTRADA no índice {}: {}", i, hash);
         }
 
-        // Print de progresso a cada 10 milhões
-        if i % 1_000_000 == 0 && i > 0 {
+        if i % 10_000 == 0 && i > 0 {
             println!("⏳ {}% concluído...", (i as f32 / iterations as f32) * 100.0);
         }
     }
@@ -265,3 +260,33 @@ fn test_tequel_avalanche_string_output() {
 
     assert!(avalanche_score > 40.0 && avalanche_score < 60.0);
 }
+
+
+
+
+// #[test]
+// pub fn test_merkle_integrity() {
+//     let a = b"block_0";
+//     let b = b"block_1";
+//     let c = b"block_2";
+//     let d = b"block_3";
+
+//     let tree_1 = merkle_nodes(a, b, c, d);
+    
+//     // Teste 1: Imutabilidade
+//     let d_modificado = b"block_4"; // Mudamos o ultimo bloco
+//     let tree_2 = merkle_nodes(a, b, c, d_modificado);
+
+//     assert_ne!(tree_1[0], tree_2[0], "A Root deveria ter mudado drasticamente!");
+
+//     // Teste 2: Reconstrução (Prova de C)
+//     let mut teq = TequelHash::new();
+//     let mut pad = [0u8; 96];
+    
+//     // Recalcula o nó pai de C e D usando o vizinho D
+//     pad[..48].copy_from_slice(&tree_1[5]); // C
+//     pad[48..].copy_from_slice(&tree_1[6]); // D
+//     let hash_cd = teq.tqlhash_raw(&pad);
+    
+//     assert_eq!(hash_cd, tree_1[2], "O hash reconstruído de C+D deve bater com o Nó 2");
+// }

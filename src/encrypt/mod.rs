@@ -7,7 +7,7 @@ use crate::rng::TequelRng;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
-use crate::avx2_inline::{ add, xor, storeu, loadu, setone, sub };
+use crate::avx2_inline::{ add_i8, xor, storeu, loadu, sub_i8, setone_i32 };
 
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -128,7 +128,7 @@ impl TequelEncrypt {
 
         // if key is empty raise an KeyError
         if key_crypt.len() == 0 {
-            return Err(TequelError::EmptyKey("Key is empty".to_string()))
+            return Err(TequelError::KeyError("Key is empty".to_string()))
         }
 
         let a = 0x107912fau32.to_be_bytes(); // KEY_C
@@ -139,30 +139,53 @@ impl TequelEncrypt {
         
         let mut res_bytes = Vec::with_capacity(data.len());
 
+        let val_a = u32::from_be_bytes(a);
+        let val_b = u32::from_be_bytes(b);
+        let val_c = u32::from_be_bytes(c);
+        let val_d = u32::from_be_bytes(d);
+        let val_e = u32::from_be_bytes(e);
+
         // AVX2
         unsafe {
 
             if is_x86_feature_detected!("avx2") {
-                let chunks = data.chunks_exact(64);
+
+                let chunks = data.chunks_exact(32);
                 let remainder = chunks.remainder();
                 
-                for (chunk_idx, chunk) in chunks.enumerate() {
 
-                    let byte_offset = chunk_idx * 32; // 0 -> 32 -> 64 -> 128 ...
+                let ymm_c_a = setone_i32(val_a as i32);
+                let ymm_c_b = setone_i32(val_b as i32);
+                let ymm_c_c = setone_i32(val_c as i32);
+                let ymm_c_d = setone_i32(val_d as i32);
+                let ymm_c_e = setone_i32(val_e as i32);
+
+
+                for (c_idx, chunk) in chunks.enumerate() {
+
+                    let byte_offset = c_idx * 32; // 0 -> 32 -> 64 -> 128 ...
                     let mut ymm1 = loadu(chunk.as_ptr() as *const __m256i);
 
-                    ymm1 = add(ymm1, setone(a[0] as i8));
-                    ymm1 = xor(ymm1, setone(b[0] as i8));
-                    ymm1 = add(ymm1, setone(c[0] as i8));
-                    ymm1 = xor(ymm1, setone(d[0] as i8));
-                    ymm1 = add(ymm1, setone(e[0] as i8));
+
+                    
+                    ymm1 = add_i8(ymm1, ymm_c_a);
+                    ymm1 = xor(ymm1, ymm_c_b);
+                    ymm1 = add_i8(ymm1, ymm_c_c);
+                    ymm1 = xor(ymm1, ymm_c_d);
+                    ymm1 = add_i8(ymm1, ymm_c_e);
                     
 
+
                     let mut expanded_key = [0u8; 32];
+                    
                     for i in 0..32 {
                         expanded_key[i] = key_crypt[(byte_offset + i) % key_crypt.len()];
                     }
+
                     ymm1 = xor(ymm1, loadu(expanded_key.as_ptr() as *const __m256i));
+
+
+
 
                     let mut out = [0u8; 32];
                     storeu(out.as_mut_ptr() as *mut __m256i, ymm1);
@@ -174,6 +197,7 @@ impl TequelEncrypt {
                 let processed_bytes = data.len() - remainder.len();
 
                 for (i, &byte) in remainder.iter().enumerate() {
+                    
                     let g_idx = processed_bytes + i;
                     let mut curr = byte;
 
@@ -186,6 +210,7 @@ impl TequelEncrypt {
                     curr = curr ^ key_crypt[g_idx % key_crypt.len()];
 
                     res_bytes.push(curr)
+                
                 }
 
             }
@@ -208,13 +233,13 @@ impl TequelEncrypt {
         mixmac_buffer.extend_from_slice(&res_bytes);
         mixmac_buffer.extend_from_slice(&b);
         mixmac_buffer.extend_from_slice(&c);
-        mixmac_buffer.extend_from_slice(&key_salt);
+        mixmac_buffer.extend_from_slice(&salt_res.as_bytes());
         mixmac_buffer.extend_from_slice(&d);
         mixmac_buffer.extend_from_slice(&key_crypt);
         mixmac_buffer.extend_from_slice(&e);
 
         let mut cus_teq_hash = TequelHash::new();
-        let comb_mixmac = cus_teq_hash.tqlhash(&mixmac_buffer);
+        let comb_mixmac = cus_teq_hash.tqlhash(&mixmac_buffer).to_lowercase();
 
 
         Ok(TequelEncryption { encrypted_data: res, salt: salt_res, mac: comb_mixmac })
@@ -268,7 +293,7 @@ impl TequelEncrypt {
     /// ```
     pub fn decrypt(&mut self, tequel_encryption: &TequelEncryption, key: &str) -> Result<String, TequelError> {
             
-        if key.is_empty() { return Err(TequelError::EmptyKey("Key is empty".to_string())); }
+        if key.is_empty() { return Err(TequelError::KeyError("Key is empty".to_string())); }
         
         // CONSTANTS            
         let a = 0x107912fau32.to_be_bytes(); // KEY_A
@@ -286,13 +311,13 @@ impl TequelEncrypt {
             TequelError::InvalidHex(e.to_string())
         })?;
 
-        let mut mixmac_buffer = Vec::with_capacity(20 + encrypted_data.len() + key.len() + salt_hex.len());
+        let mut mixmac_buffer = Vec::with_capacity(20 + encrypted_data.len() + tequel_encryption.salt.len() + key.len());
 
         mixmac_buffer.extend_from_slice(&a);
         mixmac_buffer.extend_from_slice(&encrypted_data);
         mixmac_buffer.extend_from_slice(&b);
         mixmac_buffer.extend_from_slice(&c);
-        mixmac_buffer.extend_from_slice(&salt_hex);
+        mixmac_buffer.extend_from_slice(&tequel_encryption.salt.as_bytes());
         mixmac_buffer.extend_from_slice(&d);
         mixmac_buffer.extend_from_slice(&key.as_bytes());
         mixmac_buffer.extend_from_slice(&e);
@@ -300,8 +325,13 @@ impl TequelEncrypt {
         let mut cus_teq_hash = TequelHash::new();
         let comb_mixmac = cus_teq_hash.tqlhash(&mixmac_buffer).to_lowercase();
 
-        if !self.compare_macs(tequel_encryption.mac.to_lowercase().as_bytes(), comb_mixmac.as_bytes()) {
-            return Err(TequelError::InvalidMac)
+        println!("{}", tequel_encryption.mac.to_lowercase());
+        println!("{}", comb_mixmac);
+
+        let is_valid = self.compare_macs(tequel_encryption.mac.to_lowercase().as_bytes(), comb_mixmac.as_bytes());
+
+        if !is_valid {
+            return Err(TequelError::InvalidMac);
         }
 
         // SIMD  
@@ -313,18 +343,32 @@ impl TequelEncrypt {
         let mut res_bytes = Vec::with_capacity(encrypted_data.len());
         let key_encrypt_input = key.as_bytes(); 
 
+
+        let val_a = u32::from_be_bytes(a);
+        let val_b = u32::from_be_bytes(b);
+        let val_c = u32::from_be_bytes(c);
+        let val_d = u32::from_be_bytes(d);
+        let val_e = u32::from_be_bytes(e);
+
         unsafe {
 
             if is_x86_feature_detected!("avx2") {
+
                 let chunks = encrypted_data.chunks_exact(32);
                 let remainder = chunks.remainder();
 
-                for (chunk_idx, chunk) in chunks.enumerate() {
+                let ymm_c_a = setone_i32(val_a as i32);
+                let ymm_c_b = setone_i32(val_b as i32);
+                let ymm_c_c = setone_i32(val_c as i32);
+                let ymm_c_d = setone_i32(val_d as i32);
+                let ymm_c_e = setone_i32(val_e as i32);
 
-                    let byte_offset = chunk_idx * 32;
+                for (c_idx, chunk) in chunks.enumerate() {
+
+                    let byte_offset = c_idx * 32;
                     let mut ymm1 = loadu(chunk.as_ptr() as *const __m256i);
 
-                    // Key Expansion (32 bytes)
+
                     let mut expanded_key = [0u8; 32];
                     for i in 0..32 {
                         expanded_key[i] = key_encrypt_input[(byte_offset + i) % key_encrypt_input.len()];
@@ -332,14 +376,17 @@ impl TequelEncrypt {
 
                     ymm1 = xor(ymm1, loadu(expanded_key.as_ptr() as *const __m256i));
 
-                    ymm1 = sub(ymm1, setone(e[0] as i8));
-                    ymm1 = xor(ymm1, setone(d[0] as i8));
-                    ymm1 = sub(ymm1, setone(c[0] as i8));
-                    ymm1 = xor(ymm1, setone(b[0] as i8));
-                    ymm1 = sub(ymm1, setone(a[0] as i8));
+
+                    ymm1 = sub_i8(ymm1, ymm_c_e);
+                    ymm1 = xor(ymm1,    ymm_c_d);
+                    ymm1 = sub_i8(ymm1, ymm_c_c);
+                    ymm1 = xor(ymm1, ymm_c_b);
+                    ymm1 = sub_i8(ymm1, ymm_c_a);
+
 
                     let mut out = [0u8; 32];
                     storeu(out.as_mut_ptr() as *mut __m256i, ymm1);
+
                     res_bytes.extend_from_slice(&out);
 
                 }
@@ -358,7 +405,6 @@ impl TequelEncrypt {
                     curr ^= d[g_idx % 4];
                     curr = curr.wrapping_sub(c[g_idx % 4]);
                     curr ^= b[g_idx % 4];
-
                     curr = curr.wrapping_sub(a[g_idx % 4]);
         
                     res_bytes.push(curr)

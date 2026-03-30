@@ -1,13 +1,13 @@
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
-use crate::avx2_inline::{ add, xor, or, storeu, loadu, setzero, rota_lf, rota_rg };
+use crate::avx2_inline::{ add, loadu, or, rota_lf, rota_rg, setone_i32, setzero, xor, horiz_add_avx2 };
 
 
-macro_rules! teq {
-    ($i_f:expr, $lv:expr, $lr:expr, $st_simd_a:ident, $ymm1:ident) => {
-        $st_simd_a[$i_f] = add($st_simd_a[$i_f], $ymm1);
-        $st_simd_a[$i_f] = or(rota_lf::<$lv>($st_simd_a[$i_f]), rota_rg::<$lr>($st_simd_a[$i_f]));
-        $st_simd_a[$i_f+1] = xor($st_simd_a[$i_f+1], $st_simd_a[$i_f]);
+macro_rules! teq_direct {
+    ($ss:ident, $ss1:expr, $lv:expr, $lr:expr, $ymm_a1:ident) => {
+        $ss = add($ss, $ymm_a1);
+        $ss = or(rota_lf::<$lv>($ss), rota_rg::<$lr>($ss));
+        $ss = xor($ss1, $ss);
     };
 }
 
@@ -95,45 +95,253 @@ impl TequelHash {
 
         const HEX_CHARS: &[u8; 16] = b"0123456789abcdef";
 
-        let mut st_simd_a = unsafe { [setzero(); 12] };
+        let mut s0  = unsafe { setzero() };
+        let mut s1  = unsafe { setzero() };
+        let mut s2  = unsafe { setzero() };
+        let mut s3  = unsafe { setzero() };
+        let mut s4  = unsafe { setzero() };
+        let mut s5  = unsafe { setzero() };
+        let mut s6  = unsafe { setzero() };
+        let mut s7  = unsafe { setzero() };
+        let mut s8  = unsafe { setzero() };
+        let mut s9  = unsafe { setzero() };
+        let mut s10 = unsafe { setzero() };
+        let mut s11 = unsafe { setzero() };
 
-        let mut chunks = input.chunks_exact(64);
-
-        let mut i_f = 0;
+        let mut chunks = input.chunks_exact(128);
 
         for chunk in chunks.by_ref() {
 
             unsafe {
-                let ymm1 = loadu(chunk.as_ptr() as *const __m256i);
-                let ymm2 = loadu(chunk.as_ptr().add(32) as *const __m256i);
 
-                i_f = i_f & 11;
-                let ymm2_shift = xor(ymm2, _mm256_set1_epi32(0x517CC1B7));
+                let bl_a = &chunk[..64];
+                let bl_b = &chunk[64..];
 
-                teq!(i_f, 7, 25, st_simd_a, ymm1);
-                teq!((i_f + 1) % 12, 31, 28, st_simd_a, ymm2_shift);
+                let ymm_a1 = loadu(bl_a.as_ptr() as *const __m256i);
+                let ymm_a2 = xor(loadu(bl_a.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
 
-                teq!(i_f, 25, 7, st_simd_a, ymm1);
-                teq!((i_f + 1) % 12, 23, 9, st_simd_a, ymm2_shift);
-                
-                teq!(i_f, 13, 19, st_simd_a, ymm1);
-                teq!((i_f + 1) % 12, 29, 3, st_simd_a, ymm2_shift);
-                
-                teq!(i_f, 19, 13, st_simd_a, ymm1);
-                teq!((i_f + 1) % 12, 17, 15, st_simd_a, ymm2_shift);
-                
-                teq!(i_f, 11, 21, st_simd_a, ymm1);
-                teq!((i_f + 1) % 12, 5, 27, st_simd_a, ymm2_shift);
-                
-                teq!(i_f, 3, 29, st_simd_a, ymm1);
-                teq!((i_f + 1) % 12, 2, 30, st_simd_a, ymm2_shift);
+                teq_direct!(s0,  s1,  7,  25,   ymm_a1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_a2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_a1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_a2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_a1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_a2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_a1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_a2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_a1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_a2);
+                teq_direct!(s10, s11, 3,  29,   ymm_a1);
+                teq_direct!(s11, s0,  2,  30,   ymm_a2);
 
-                st_simd_a[0] = xor(st_simd_a[0], st_simd_a[11]);
-                
+                let ymm_b1 = loadu(bl_b.as_ptr() as *const __m256i);
+                let ymm_b2 = xor(loadu(bl_b.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0,  s1,  7,  25,   ymm_b1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_b2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_b1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_b2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_b1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_b2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_b1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_b2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_b1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_b2);
+                teq_direct!(s10, s11, 3,  29,   ymm_b1);
+                teq_direct!(s11, s0,  2,  30,   ymm_b2);
+
+                s0 = xor(s0, s11);
 
             }
 
         }
+
+
+        unsafe {
+            self.states[0]  = self.states[0] .wrapping_add(horiz_add_avx2(s0));
+            self.states[1]  = self.states[1] .wrapping_add(horiz_add_avx2(s1));
+            self.states[2]  = self.states[2] .wrapping_add(horiz_add_avx2(s2));
+            self.states[3]  = self.states[3] .wrapping_add(horiz_add_avx2(s3));
+            self.states[4]  = self.states[4] .wrapping_add(horiz_add_avx2(s4));
+            self.states[5]  = self.states[5] .wrapping_add(horiz_add_avx2(s5));
+            self.states[6]  = self.states[6] .wrapping_add(horiz_add_avx2(s6));
+            self.states[7]  = self.states[7] .wrapping_add(horiz_add_avx2(s7));
+            self.states[8]  = self.states[8] .wrapping_add(horiz_add_avx2(s8));
+            self.states[9]  = self.states[9] .wrapping_add(horiz_add_avx2(s9));
+            self.states[10] = self.states[10].wrapping_add(horiz_add_avx2(s10));
+            self.states[11] = self.states[11].wrapping_add(horiz_add_avx2(s11));
+        }
+
+
+        let remainder_128 = chunks.remainder();
+        let mut chunks_64 = remainder_128.chunks_exact(64);
+
+        for chunk in chunks_64.by_ref() {
+            unsafe {
+
+                let ymm_a1 = loadu(chunk.as_ptr() as *const __m256i);
+                let ymm_a2 = xor(loadu(chunk.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0,  s1,  7,  25,   ymm_a1);
+                teq_direct!(s1,  s2,  31, 28,   ymm_a2);
+                teq_direct!(s2,  s3,  25, 7,    ymm_a1);
+                teq_direct!(s3,  s4,  23, 9,    ymm_a2);
+                teq_direct!(s4,  s5,  13, 19,   ymm_a1);
+                teq_direct!(s5,  s6,  29, 3,    ymm_a2);
+                teq_direct!(s6,  s7,  19, 13,   ymm_a1);
+                teq_direct!(s7,  s8,  17, 15,   ymm_a2);
+                teq_direct!(s8,  s9,  11, 21,   ymm_a1);
+                teq_direct!(s9,  s10, 5,  27,   ymm_a2);
+                teq_direct!(s10, s11, 3,  29,   ymm_a1);
+                teq_direct!(s11, s0,  2,  30,   ymm_a2);                
+
+            }
+        }
+
+
+        let final_remainder = chunks_64.remainder();
+
+        for (idx, &byte) in final_remainder.iter().enumerate() {
+            let pos = idx % 12;
+            self.states[pos] = self.states[pos].wrapping_add((byte as u32) ^ 0x9E3779B1);
+        }
+
+        self.apply_final_mixer_64();
+
+        let mut hex_buffer = vec![0u8; 96];
+
+        for (i, &s) in self.states.iter().enumerate() {
+            let bytes = s.to_be_bytes();
+            for (j, &byte) in bytes.iter().enumerate() {
+                let offset = (i * 8) + (j * 2);
+                hex_buffer[offset] = HEX_CHARS[(byte >> 4) as usize];
+                hex_buffer[offset + 1] = HEX_CHARS[(byte & 0x0f) as usize];
+            }
+        }
+        
+        unsafe { String::from_utf8_unchecked(hex_buffer) }
+
+    }
+
+
+    /// Generates a unique 384-bit hexadecimal hash from the input data.
+    ///
+    /// This function is the core of the Tequel engine, utilizing **SIMD/AVX2** /// instructions to process data in 256-bit blocks. It is designed for 
+    /// high-speed performance and maximum bit diffusion.
+    ///
+    /// # Performance
+    /// By leveraging hardware acceleration, `tqlhash_raw` achieves significantly lower 
+    /// latency compared to scalar implementations, making it ideal for 
+    /// large-scale data integrity checks and real-time obfuscation.
+    ///
+    /// # Determinism
+    /// The algorithm is strictly deterministic. Providing the same input bytes 
+    /// will always yield the exact same hexadecimal string.
+    ///
+    /// # Arguments
+    /// * `input` - The raw data bytes (`&[u8]`).
+    ///
+    /// # Returns
+    /// A 32-bit list `[u8; 32]` 
+    ///
+    /// # Example
+    /// ```rust
+    /// use tequel_rs::hash::TequelHash;
+    /// 
+    /// let mut tequel = TequelHash::new();
+    /// let data = b"secret_data";
+    /// 
+    /// let bytes_a = tequel.tqlhash_raw(data);
+    /// let bytes_b = tequel.tqlhash_raw(data);
+    /// 
+    /// assert_eq!(bytes_a, bytes_b);
+    /// println!("bytes: {:?}", bytes_a);
+    /// ```
+    pub fn tqlhash_raw(&mut self, input: &[u8]) -> [u8; 48] {
+
+        self.states = [
+            0x107912FA, 0x220952EA, 0x3320212A, 0x4324312F, 
+            0x5320212A, 0x9E3779B1, 0x85EBCA6B, 0xAD35744D,
+            0xCC2912FA, 0xEE0952EA, 0x1120212A, 0x2224312F,
+        ];
+
+        const HEX_CHARS: &[u8; 16] = b"0123456789abcdef";
+
+        let mut s0  = unsafe { setzero() };
+        let mut s1  = unsafe { setzero() };
+        let mut s2  = unsafe { setzero() };
+        let mut s3  = unsafe { setzero() };
+        let mut s4  = unsafe { setzero() };
+        let mut s5  = unsafe { setzero() };
+        let mut s6  = unsafe { setzero() };
+        let mut s7  = unsafe { setzero() };
+        let mut s8  = unsafe { setzero() };
+        let mut s9  = unsafe { setzero() };
+        let mut s10 = unsafe { setzero() };
+        let mut s11 = unsafe { setzero() };
+
+        let mut chunks = input.chunks_exact(128);
+
+        for chunk in chunks.by_ref() {
+
+            unsafe {
+
+                let bl_a = &chunk[..64];
+                let bl_b = &chunk[64..];
+
+                let ymm_a1 = loadu(bl_a.as_ptr() as *const __m256i);
+                let ymm_a2 = xor(loadu(bl_a.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0, s1, 7, 25,   ymm_a1);
+                teq_direct!(s1, s2, 31, 28,  ymm_a2);
+                teq_direct!(s2, s3, 25, 7,   ymm_a1);
+                teq_direct!(s3, s4, 23, 9,   ymm_a2);
+                teq_direct!(s4, s5, 13, 19,  ymm_a1);
+                teq_direct!(s5, s6, 29, 3,   ymm_a2);
+                teq_direct!(s6, s7, 19, 13,  ymm_a1);
+                teq_direct!(s7, s8, 17, 15,  ymm_a2);
+                teq_direct!(s8, s9, 11, 21,  ymm_a1);
+                teq_direct!(s9, s10, 5, 27,  ymm_a2);
+                teq_direct!(s10, s11, 3, 29, ymm_a1);
+                teq_direct!(s11, s0, 2, 30,  ymm_a2);
+
+                let ymm_b1 = loadu(bl_b.as_ptr() as *const __m256i);
+                let ymm_b2 = xor(loadu(bl_b.as_ptr().add(32) as *const __m256i), setone_i32(0x517CC1B7));
+
+                teq_direct!(s0, s1, 7, 25,   ymm_b1);
+                teq_direct!(s1, s2, 31, 28,  ymm_b2);
+                teq_direct!(s2, s3, 25, 7,   ymm_b1);
+                teq_direct!(s3, s4, 23, 9,   ymm_b2);
+                teq_direct!(s4, s5, 13, 19,  ymm_b1);
+                teq_direct!(s5, s6, 29, 3,   ymm_b2);
+                teq_direct!(s6, s7, 19, 13,  ymm_b1);
+                teq_direct!(s7, s8, 17, 15,  ymm_b2);
+                teq_direct!(s8, s9, 11, 21,  ymm_b1);
+                teq_direct!(s9, s10, 5, 27,  ymm_b2);
+                teq_direct!(s10, s11, 3, 29, ymm_b1);
+                teq_direct!(s11, s0, 2, 30,  ymm_b2);
+
+                s0 = xor(s0, s11);
+
+            }
+
+        }
+
+
+        unsafe {
+            self.states[0]  = self.states[0] .wrapping_add(horiz_add_avx2(s0));
+            self.states[1]  = self.states[1] .wrapping_add(horiz_add_avx2(s1));
+            self.states[2]  = self.states[2] .wrapping_add(horiz_add_avx2(s2));
+            self.states[3]  = self.states[3] .wrapping_add(horiz_add_avx2(s3));
+            self.states[4]  = self.states[4] .wrapping_add(horiz_add_avx2(s4));
+            self.states[5]  = self.states[5] .wrapping_add(horiz_add_avx2(s5));
+            self.states[6]  = self.states[6] .wrapping_add(horiz_add_avx2(s6));
+            self.states[7]  = self.states[7] .wrapping_add(horiz_add_avx2(s7));
+            self.states[8]  = self.states[8] .wrapping_add(horiz_add_avx2(s8));
+            self.states[9]  = self.states[9] .wrapping_add(horiz_add_avx2(s9));
+            self.states[10] = self.states[10].wrapping_add(horiz_add_avx2(s10));
+            self.states[11] = self.states[11].wrapping_add(horiz_add_avx2(s11));
+        }
+
 
         let remainder = chunks.remainder();
         
@@ -142,48 +350,18 @@ impl TequelHash {
             self.states[pos] = self.states[pos].wrapping_add((byte as u32) ^ 0x9E3779B1);
         }
 
-        for i in 0..12 {
-            unsafe { self.states[i] = self.states[i].wrapping_add(self.horiz_add_avx2(st_simd_a[i])); };
-        }
-
         self.apply_final_mixer_64();
-
-        let mut result = String::with_capacity(96);
-        for &s in self.states.iter() {
-            for byte in s.to_be_bytes().iter() {
-                result.push(HEX_CHARS[(byte >> 4) as usize] as char);
-                result.push(HEX_CHARS[(byte & 0x0f) as usize] as char);
-            }
-        }
         
-        result
+        let mut bytes = [0u8; 48];
 
-    }
-
-
-
-    #[inline(always)]
-    unsafe fn horiz_add_avx2(&self, v: __m256i) -> u32 {
-        let mut arr = [0u32; 8];
-        
-        unsafe { storeu(arr.as_mut_ptr() as *mut __m256i, v) };          
-
-        arr.iter().fold(0, |acc, &x| acc.wrapping_add(x))
-    }
-
-    fn apply_final_mixer_64(&mut self) {
-        for r in 0..64 {
-            for i in 0..12 {
-                let prev = if i == 0 { 11 } else { i - 1 };
-                let next = (i + 1) % 12;
-
-                self.states[i] = self.states[i]
-                    .wrapping_add(self.states[prev])
-                    .rotate_left(((r % 31) as u32) + 1);
-                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
-            }
+        for (i, &val) in self.states.iter().enumerate() {
+            let b = val.to_be_bytes();
+            bytes[i*4 .. i*4+4].copy_from_slice(&b);
         }
+
+        bytes
     }
+
 
 
     /// Verifies if a given hash matches the original input data.
@@ -293,5 +471,20 @@ impl TequelHash {
         key
     }
 
+
+
+    fn apply_final_mixer_64(&mut self) {
+        for r in 0..64 {
+            for i in 0..12 {
+                let prev = if i == 0 { 11 } else { i - 1 };
+                let next = (i + 1) % 12;
+
+                self.states[i] = self.states[i]
+                    .wrapping_add(self.states[prev])
+                    .rotate_left(((r % 31) as u32) + 1);
+                self.states[next] ^= self.states[i].wrapping_mul(0xAD35744D);
+            }
+        }
+    }
 
 }
