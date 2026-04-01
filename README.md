@@ -94,7 +94,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tequel-rs = "1.1.1"
+tequel-rs = "1.2.0"
 ```
 
 ## Usage

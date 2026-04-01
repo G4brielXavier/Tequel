@@ -16,7 +16,7 @@
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 use crate::avx2_inline::{ add, loadu, or, rota_lf, rota_rg, setone_i32, setzero, xor, horiz_add_avx2 };
-
+use std::hint::black_box;
 
 macro_rules! teq_direct {
     ($ss:ident, $ss1:expr, $lv:expr, $lr:expr, $ymm_a1:ident) => {
@@ -279,8 +279,6 @@ impl TequelHash {
             0xCC2912FA, 0xEE0952EA, 0x1120212A, 0x2224312F,
         ];
 
-        const HEX_CHARS: &[u8; 16] = b"0123456789abcdef";
-
         let mut s0  = unsafe { setzero() };
         let mut s1  = unsafe { setzero() };
         let mut s2  = unsafe { setzero() };
@@ -412,11 +410,7 @@ impl TequelHash {
     /// ```
     pub fn isv_tqlhash(&mut self, hash: &String, input: &[u8]) -> bool {
         
-        let mut prop_tequel = TequelHash::new()
-            .with_salt(&self.salt)
-            .with_iteration(self.iterations);
-
-        let new_hash = prop_tequel.tqlhash(input);
+        let new_hash = self.tqlhash(input);
 
         let a = new_hash.as_bytes();
         let b = hash.as_bytes();
@@ -427,7 +421,22 @@ impl TequelHash {
 
         let mut result = 0u8;
         for i in 0..a.len() {
-            result |= a[i] ^ b[i];
+            result |= black_box(a[i] ^ b[i]);
+        }
+
+        result == 0
+
+    }
+
+
+    pub fn isv_tqlhash_raw(&mut self, hash: &[u8; 48], input: &[u8]) -> bool {
+
+        let a_bh = self.tqlhash_raw(input);
+
+        let mut result = 0u8;
+
+        for i in 0..48 {
+            result |= black_box(a_bh[i] ^ hash[i]);
         }
 
         result == 0

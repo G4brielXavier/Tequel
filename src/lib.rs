@@ -33,3 +33,23 @@ pub extern "C" fn tequel_hash_raw(data: *const u8, len: usize, out: *mut u8) {
         std::ptr::copy_nonoverlapping(hash_result.as_ptr(), out, 48);
     }
 } 
+
+
+#[unsafe(no_mangle)]
+pub extern "C" fn isv_tequel_hash_raw(hash_ptr: *const u8, input_ptr: *const u8, input_len: usize) -> bool {
+    
+    let hash = unsafe { assert!(!hash_ptr.is_null()); std::slice::from_raw_parts(hash_ptr, 48) };
+    let input = unsafe { assert!(!input_ptr.is_null()); std::slice::from_raw_parts(input_ptr, input_len) };
+
+    let mut teq = hash::TequelHash::new();
+    let curr_hash = teq.tqlhash_raw(input);
+
+    let mut result = 0u8;
+    
+    for i in 0..48 {
+        result |= curr_hash[i] ^ hash[i];
+    }
+
+    result == 0
+
+}
