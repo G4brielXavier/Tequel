@@ -107,7 +107,7 @@ fn test_tequel_stress_loop_10000() {
         let decrypted = teq_crypt.decrypt(&encrypted, key)
             .expect(&format!("Failed in decrypt loop {} - Erro de UTF-8?", i));
 
-        // 3. Validação
+        // 3. Validation
         assert_eq!(original_data, decrypted, "Integrity error loop {}", i);
     }
     
@@ -146,8 +146,7 @@ fn test_tequel_fuzzing_resistance() -> Result<(), Box<dyn std::error::Error>> {
         
         let trash_data = teq.decrypt(&corrupted, "key123");
 
-        assert!(trash_data.is_err(), "O Tequel aceitou um objeto corrompido! Erro de integridade.");
-        println!("✅ Fuzzing de Objeto: Tequel stopped corromped structure.");
+        assert!(trash_data.is_err(), "Tequel accepted corrupted data");
 
     }
 
@@ -187,7 +186,7 @@ fn test_collision_resistance_optimized() {
     
     let mut buffer = String::with_capacity(64);
     
-    println!("🚀 Iniciando teste de colisão: {} iterações", iterations);
+    println!("Starting colision test: {} iterations", iterations);
     let start = Instant::now();
 
     for i in 0..iterations {
@@ -201,22 +200,22 @@ fn test_collision_resistance_optimized() {
 
         if !seen_hashes.insert(hash.clone()) {
             collisions += 1;
-            println!("💥 COLISÃO ENCONTRADA no índice {}: {}", i, hash);
+            println!("💥 Colision found in index {}: {}", i, hash);
         }
 
         if i % 10_000 == 0 && i > 0 {
-            println!("⏳ {}% concluído...", (i as f32 / iterations as f32) * 100.0);
+            println!("{}% ...", (i as f32 / iterations as f32) * 100.0);
         }
     }
 
     let duration = start.elapsed();
-    println!("\n✅ Teste Finalizado!");
-    println!("📊 Total: {} iterações", iterations);
-    println!("💥 Colisões: {}", collisions);
-    println!("⏱️ Tempo total: {:.2?}", duration);
-    println!("⚡ Velocidade: {:.2} hashes/sec", iterations as f64 / duration.as_secs_f64());
+    println!("- Test Finish!");
+    println!("Total: {} iterations", iterations);
+    println!("Colisions: {}", collisions);
+    println!("Total time: {:.2?}", duration);
+    println!("Speed: {:.2} hash/s", iterations as f64 / duration.as_secs_f64());
 
-    assert_eq!(collisions, 0, "Tequel falhou no teste de colisão!");
+    assert_eq!(collisions, 0, "Tequel failed in colision test!");
 }
 
 
@@ -226,7 +225,6 @@ fn test_tequel_avalanche_string_output() {
     let mut hasher = TequelHash::new();
     let input = b"payload_id_777_supply_chain_data_2026";
     
-    // Pegamos o hash base e convertemos de Hex String para Bytes
     let base_hash_hex = hasher.tqlhash(input);
     let base_bytes = hex::decode(&base_hash_hex).expect("Hash base deve ser um hexa válido");
     
@@ -240,8 +238,7 @@ fn test_tequel_avalanche_string_output() {
             
             let new_hash_hex = hasher.tqlhash(&modified_input);
             let new_bytes = hex::decode(&new_hash_hex).expect("Novo hash deve ser um hexa válido");
-            
-            // Comparamos bit a bit entre os arrays de bytes
+
             for (b1, b2) in base_bytes.iter().zip(new_bytes.iter()) {
                 let diff = b1 ^ b2;
                 total_bit_flips += diff.count_ones();
@@ -249,14 +246,11 @@ fn test_tequel_avalanche_string_output() {
         }
     }
 
-    // Calcula a porcentagem baseada no tamanho total do hash (ex: 256 bits ou 64 bits)
     let hash_bits_output = base_bytes.len() * 8; 
     let avalanche_score = (total_bit_flips as f64 / (total_bits_input * hash_bits_output) as f64) * 100.0;
 
-    println!("\n--- 🌪️ RELATÓRIO DE AVALANCHE TEQUEL (STRING OUTPUT) ---");
-    println!("📊 Bits totais de saída analisados: {}", total_bits_input * hash_bits_output);
-    println!("🎯 Média de Avalanche: {:.2}%", avalanche_score);
-    println!("---------------------------------------");
+    println!("Total bits: {}", total_bits_input * hash_bits_output);
+    println!("Avalanche: {:.2}%", avalanche_score);
 
     assert!(avalanche_score > 40.0 && avalanche_score < 60.0);
 }

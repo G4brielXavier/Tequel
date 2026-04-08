@@ -4,150 +4,90 @@
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![Rust](https://img.shields.io/badge/rust-v1.70%2B-black?style=flat-square&logo=rust)
 
-*A high-performance, Register-Aware SIMD cryptographic engine and hash function, built in pure Rust for mission-critical data integrity.*
+Tequel is a high-performance cryptographic integrity engine and hash function implemented in pure Rust, optimized for AVX2-capable x86_64 architectures.
 
-**Tequel +1.0.0: The "Iron-Clad" Performance Update.** Featuring a complete core refactor, the TQL-11 engine now utilizes **Register Pinning** and **2x Loop Unrolling**, delivering a massive **+125% throughput increase** in single-core environments and stabilizing at a rock-solid **~23 MiB/s** for large-scale data.
+## Technical Architecture (TQL-11)
 
-> *By Gabriel "dotxav" Xavier (@G4brielXavier)*
+The TQL-11 core utilizes an ARX (Addition-Rotation-XOR) primitive designed for high-density bit diffusion and hardware-level efficiency.
 
-## 🔬 Internal Architecture: TQL-11 (v+1.0.0)
+* **Register Pinning:** Maps internal states directly to YMM registers to minimize stack spilling and maximize execution unit utilization.
+* **Loop Unrolling:** 2x unrolling (128 bytes per iteration) to reduce branch overhead and improve Instruction-Level Parallelism (ILP).
+* **SIMD Implementation:** Parallel YMM processing with asymmetric bit-twisting for distinct entropy paths.
+* **Zero-Allocation Pipeline:** Uses static lookup tables for hexadecimal serialization and memory-mapped data processing.
 
-Tequel is powered by the **TQL-11**, a custom ARX (Addition-Rotation-XOR) primitive engineered for high-density bit diffusion and hardware-level efficiency.
+## Performance Benchmarks
 
-* **Register Pinning:** Elimination of "Register Spilling" by mapping the 12 internal states directly to YMM registers, keeping all operations inside the CPU execution units and bypassing the Stack/RAM bottleneck.
-* **2x Loop Unrolling:** Processes 128 bytes per iteration (interleaving two 64-byte blocks), reducing branch overhead and maximizing Instruction-Level Parallelism (ILP).
-* **Dual-Wide SIMD:** Processes parallel YMM blocks using asymmetric bit-twisting (`0x517CC1B7`) to ensure unique entropy paths.
-* **Zero-Allocation Hex Engine:** Optimized hexadecimal serialization using static lookup tables, delivering O(1) latency for hash output.
+Benchmarks conducted using Criterion on x86_64 hardware.
+**Environment:** 8-core / 16-thread | `target-cpu=native` | AVX2.
 
-## 🌪️ The Physics of Chaos: Digital Product Passport (DPP)
-
-Tequel was engineered for **Digital Product Passports (DPP)**. In industrial environments, speed is nothing without integrity. 
-
-With a **50.14% Strict Avalanche Criterion (SAC)**, Tequel ensures that flipping a single bit in a product's telemetry or history results in a completely different hash. By running at **~23 MiB/s (Single-Core)**, it allows real-time scanning and verification on edge devices without draining battery or creating production bottlenecks.
-
-
-
-## 📊 Performance Benchmarks (v1.0.0)
-
-### Single-Core Evolution (Criterion)
-Verified on `target-cpu=native` (AVX2).
-
-| Metric | v0.8.0 | **v1.0.0 (Current)** | Improvement |
-| :--- | :--- | :--- | :--- |
-| **Small Data (1024 bytes)** | 11.10 MiB/s | **22.33 MiB/s** | **+125.5%** |
-| **Medium Data (65KB)** | 10.90 MiB/s | **23.38 MiB/s** | **+114.5%** |
-| **Large Data (1MB)** | 11.05 MiB/s | **23.05 MiB/s** | **+108.6%** |
-| **Parallel Throughput** | ~970 MiB/s | **~1.1 GiB/s** | **+19.6%** |
-
-### Comparative Analysis
-| Algorithm | Throughput (MB/s) | Avalanche (SAC) | CPU Usage | Primary Use-Case |
-| :--- | :--- | :--- | :--- | :--- |
-| **SHA-256** | ~380 MB/s | 50.01% | High | High-Security / Crypto |
-| **xxHash (XXH3)** | ~25,000+ MB/s | 48.20% | Ultra-Low | Checksums / HashMaps |
-| **Tequel (TQL-11)** | **~23 MB/s (Core)** | **50.14%** | **Efficient** | **Industrial IoT / DPP** |
-
-## 🛡️ Statistical Rigor
-
-* **Strict Avalanche Criterion (SAC):** 50.14% (Ideal statistical randomness).
-* **Shannon Entropy:** 7.999991 bits/byte. Output is statistically indistinguishable from white noise.
-* **Memory Footprint:** Zero heap allocations during the hashing process.
-
-## ⚙️ Core Features
-
-* **AVX2 Pinned State**: Manual register allocation for maximum throughput.
-* **Hybrid Remainder Logic**: Multi-stage cleanup (128-byte unroll -> 64-byte SIMD -> Byte-wise scalar).
-* **Rayon Ready**: Native scaling for multi-threaded file integrity verification.
-* **Zero Dependencies**: Pure Rust, no external overhead.
-
-## ⚖️ SHA-384 x TQL-11 (Comparison)
-
-> **Developer Note:** This comparison is a snapshot of current progress. SHA-2 (SHA-384) has 20+ years of global optimization and micro-code refinement. **TQL-11** was built from scratch in **30 days** to serve as the backbone of a high-performance, deterministic ecosystem.
-
-### 📊 Benchmark: 100MB Multi-Core Stress Test
-The following data represents a heavy-load scenario using **Rayon** for parallelism and **AVX2 SIMD** intrinsics.
-
-| Metric | SHA-384 (Standard) | **TQL-11 (Tequel v1.0.0)** |
+### Throughput Scaling
+| Payload Size | Throughput (v1.1.0) | Note |
 | :--- | :--- | :--- |
-| **Execution Time** | ~53ms | **~95ms** |
-| **Throughput (Parallel)** | ~1.8 GiB/s | **1.1 GiB/s** |
-| **Stability (Jitter)** | Fluctuating | **Ultra-Stable (Low Variance)** |
-| **Security Width** | 384-bit | **384-bit Native ARX** |
-| **Entropy Score** | - | **7.9999981 / 8.0** |
+| 1024 bytes | 12.44 MiB/s | Setup overhead dominant |
+| 1 MB | **7.89 GiB/s** | Single-core saturation |
+| 100 MB (Parallel) | **25.13 GiB/s** | Multi-threaded (Rayon) |
 
-![Benchmark Comparison](./img/shas384xtql11.png)
-![Benchmark Comparison](./img/throughput.png)
+### Comparative Analysis (Single-Core 1MB)
+| Algorithm | Throughput | Implementation |
+| :--- | :--- | :--- |
+| SHA-384 | ~604 MiB/s | Standard ARX |
+| **Tequel (TQL-11)** | **~7.89 GiB/s** | **Native AVX2** |
 
-### 🛡️ Why TQL-11?
+## Statistical Validation
 
-While SHA-384 is a sprint champion for small, serial tasks, **TQL-11** was engineered for **Industrial Scalability** (DPP - Digital Product Passport). Its core strengths are:
-
-1. **Deterministic Latency:** The scatter plot analysis shows near-zero timing outliers. In a production line (IoT/DPP), predictability is more valuable than raw peak speed.
-2. **Parallel-First Design:** Optimized for saturating modern NVMe bandwidth. At **1.1 GiB/s**, TQL-11 processes **500,000 items in just 12 seconds**.
-3. **Cryptographic Density:** With an entropy of **7.9999981** and an avalanche effect (Diff) of **50.14%**, it delivers top-tier bit dispersion, ensuring maximum integrity for every "carimbo" in the ecosystem.
-
-> *TQL-11 isn't just a hash; it's a mission-critical engine for high-volume data integrity.*
-
-
-## 📥 Installation
-
-Add to your `Cargo.toml`:
-
-```toml
-[dependencies]
-tequel-rs = "1.2.0"
-```
+* **Strict Avalanche Criterion (SAC):** 50.14%
+* **Shannon Entropy:** 7.999991 bits/byte
+* **Heap Usage:** Zero dynamic allocations during hashing process
+* **Determinism:** Guaranteed across x86_64-avx2 platforms
 
 ## Usage
 
-### High-Performance Hashing
+### Rust
+Add to `Cargo.toml`:
+```toml
+tequel-rs = "1.2.0"
+```
 
 ```rust
 use tequel::hash::TequelHash;
 
 fn main() {
     let mut teq = TequelHash::new();
-    let data = b"data_to_verify_integrity";
-    
-    // Generates a 384-bit secure hash string
+    let data = b"example_data";
     let hash = teq.tqlhash(data);
-    println!("TQL-11 Integrity Hash: {}", hash);
+    println!("Hash: {}", hash);
 }
 ```
 
-### Interoperability (in C)
+
+### C Interoperability
 
 ```c
 #include "tequel.h"
 #include <stdio.h>
 
 int main() {
-
     uint8_t input[] = "data";
     uint8_t hash[48];
-
     tequel_hash_raw(input, sizeof(input), hash);
-
-    printf("Tequel Hash: ");
-
-    for(int i = 0; i < 48; i++) {
-        printf("%02x", hash[i]);
-    }
-
-    printf("\n");
-
     return 0;
-
 }
 ```
 
+## Benchmarking
 
-## Why the name 'Tequel'?
+To reproduce results on your local hardware:
 
-"Tequel" is a reference from the Book of Daniel: "*Mene, Mene, Tequel, Parsim*".
+```ps
+$env:RUSTFLAGS="-C target-cpu=native"; cargo bench
+```
 
-**TEQUEL** means "**Weighed**". It represents a judgment where data is weighed and its integrity verified. In this library, it stands for the cryptographic weight and the balance between speed and chaos—data secured by Tequel is weighed and found impenetrable.
+
+## Etymology
+
+"Tequel" refers to the concept of "being weighed" (Daniel 5:27), representing the verification of data integrity.
 
 
-## AGPLv3 License
+## License
 
-Tequel is licensed under AGPLv3. For commercial inquiries, custom integrations, or closed-source licensing, please contact me at **dotxavket@gmail.com**.
+Licensed under AGPLv3. For commercial licensing or closed-source integrations, contact dotxavket@gmail.com.

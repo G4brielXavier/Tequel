@@ -1,6 +1,6 @@
 [package]
 name = "tequel-rs"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2024"
 authors = ["Gabriel 'dotxav' Xavier <dotxavket@gmail.com>"]
 description = "A high-performance, Dual-Wide SIMD cryptographic engine and hash function, built in pure Rust for modern x86_64 architectures."
@@ -10,7 +10,7 @@ documentation = "https://docs.rs/tequel-rs"
 readme = "README.md"
 keywords = ["cryptography", "encryption", "aead", "security", "rust"]
 categories = ["cryptography", "algorithms", "no-std"]
-exclude = ["/benches", "/tests", ".gitignore"]
+exclude = ["/tests", ".gitignore"]
 
 [lib]
 name = "tequel"
@@ -36,6 +36,9 @@ serde = ["dep:serde"]
 [[bench]]
 name = "tequel_bench"
 harness = false
+
+[profile.bench]
+panic = "unwind"
 
 [profile.release]
 opt-level = 3
