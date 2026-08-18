@@ -4,6 +4,8 @@
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![Rust](https://img.shields.io/badge/rust-v1.70%2B-black?style=flat-square&logo=rust)
 
+> **This project is deprecated, used only for personal study purposes.**
+
 Tequel is a high-performance integrity engine and hash function implemented in pure Rust, optimized for 4x Unrolling and AVX2-capable x86_64 architectures.
 
 > In v2.0.0, Tequel no longer focuses on security, but rather on high integrity and raw throughput, therefore, `TequelEncrypt` has been removed.  
