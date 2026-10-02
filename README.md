@@ -106,12 +106,6 @@ RUSTFLAGS="-C target-cpu=native" cargo bench
 cargo test -- --no-capture
 ```
 
-
-## Etymology
-
-"Tequel" refers to the concept of "being weighed" (Daniel 5:27), representing the verification of data integrity.
-
-
 ## License
 
-Licensed under AGPLv3. For commercial licensing or closed-source integrations, contact dotxavket@gmail.com.
+Licensed under [MIT License](./LICENSE).
